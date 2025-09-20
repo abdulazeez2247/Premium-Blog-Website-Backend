@@ -4,7 +4,7 @@ const mongoose = require('mongoose')
 const user = mongoose.Schema(
     {
 
-        fullName:{
+        Firstname:{
             type:String,
             required:[true , 'Please enter your firstname'],
             trim:true,
@@ -14,7 +14,7 @@ const user = mongoose.Schema(
             required:[true , 'Please enter your lastname'],
             trim:true,
         },
-        username:{
+        Username:{
             type:String,
             required:[true , 'Please enter your lastname'],
             trim:true,
@@ -33,6 +33,21 @@ const user = mongoose.Schema(
             maxLength:[1028 , 'password should not exceed 1028'],
             trim:true,
         },
+        Phonenumber: {
+            type: String,
+            required: [true, 'Please enter your phone number'],
+            trim: true,
+        },
+        country: {
+            type: String,
+            required: [true, 'Enter your country'],
+            trim: true,
+        },
+        role: {
+            type: String,
+            enum: ['user', 'admin','moderator'],
+            default: 'user'
+        },
         isVerified:{
             type:Boolean,
             default:false
@@ -45,3 +60,4 @@ const user = mongoose.Schema(
 
 const usermodel = mongoose.model('users', user);
 module.exports = usermodel
+// i must add country to this and phone number

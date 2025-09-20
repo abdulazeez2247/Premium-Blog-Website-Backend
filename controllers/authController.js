@@ -12,10 +12,10 @@ const generateOtp = () => {
 // Register user
 const registerUser = async (req, res) => {
   try {
-    const { fullName, username, email, phoneNumber, country, password } = req.body;
+    const { Firstname, Lastname, Username, email, Phonenumber, country, password } = req.body;
 
     // Check if all required fields are provided
-    if (!fullName || !username || !country || !password || (!email && !phoneNumber)) {
+    if (!Firstname || !Username || !Lastname || !country || !password || (!email && !Phonenumber)) {
       return res.status(400).json({
         success: false,
         message: 'Please provide all required fields'
@@ -24,13 +24,13 @@ const registerUser = async (req, res) => {
 
     // Check if user already exists
     const existingUser = await User.findOne({
-      $or: [{ email }, { username }, { phoneNumber }]
+      $or: [{ email }, { Username }, { Phonenumber }]
     });
 
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: 'User with this email, username, or phone number already exists'
+        message: 'User with this email, username, or phone number already exists please try changing your username, phone number or email thank you'
       });
     }
 
@@ -39,10 +39,11 @@ const registerUser = async (req, res) => {
 
     // Create user
     const user = new User({
-      fullName,
-      username,
+      Firstname,
+      Lastname,
+      Username,
       email,
-      phoneNumber,
+      Phonenumber,
       country,
       password: hashedPassword
     });
@@ -63,11 +64,13 @@ const registerUser = async (req, res) => {
     // Send OTP email if email was provided
     if (email) {
       await sendOtpEmail(email, otp);
+      console.log(otp);
+      
     }
 
     // Send welcome email if email was provided
     if (email) {
-      await sendWelcomeEmail(email, fullName);
+      await sendWelcomeEmail(email, Firstname);
     }
 
     res.status(201).json({
@@ -76,7 +79,7 @@ const registerUser = async (req, res) => {
       data: {
         // Don't include user ID in response
         email: user.email,
-        phoneNumber: user.phoneNumber,
+        Phonenumber: user.Phonenumber,
         verificationHint: 'Use your email or phone number to verify your account'
       }
     });
@@ -92,10 +95,10 @@ const registerUser = async (req, res) => {
 // Verify OTP
 const verifyOtp = async (req, res) => {
   try {
-    const { email, phoneNumber, otp } = req.body;
+    const { email, Phonenumber, otp } = req.body;
 
     // Check if either email or phone number is provided
-    if ((!email && !phoneNumber) || !otp) {
+    if ((!email && !Phonenumber) || !otp) {
       return res.status(400).json({
         success: false,
         message: 'Email or phone number and OTP are required'
@@ -104,7 +107,7 @@ const verifyOtp = async (req, res) => {
 
     // Find user by email or phone number
     const user = await User.findOne({
-      $or: [{ email }, { phoneNumber }]
+      $or: [{ email }, { Phonenumber }]
     });
 
     if (!user) {
@@ -156,10 +159,10 @@ const verifyOtp = async (req, res) => {
 // Resend OTP
 const resendOtp = async (req, res) => {
   try {
-    const { email, phoneNumber } = req.body;
+    const { email, Phonenumber } = req.body;
 
     // Check if either email or phone number is provided
-    if (!email && !phoneNumber) {
+    if (!email && !Phonenumber) {
       return res.status(400).json({
         success: false,
         message: 'Email or phone number is required'
@@ -168,7 +171,7 @@ const resendOtp = async (req, res) => {
 
     // Find user by email or phone number
     const user = await User.findOne({
-      $or: [{ email }, { phoneNumber }]
+      $or: [{ email }, { Phonenumber }]
     });
 
     if (!user) {
@@ -215,9 +218,9 @@ const resendOtp = async (req, res) => {
 // Login user
 const loginUser = async (req, res) => {
   try {
-    const { email, phoneNumber, password } = req.body;
+    const { email, Phonenumber, password } = req.body;
 
-    if ((!email && !phoneNumber) || !password) {
+    if ((!email && !Phonenumber) || !password) {
       return res.status(400).json({
         success: false,
         message: 'Please provide email/phone and password'
@@ -226,7 +229,7 @@ const loginUser = async (req, res) => {
 
     // Find user by email or phone number
     const user = await User.findOne({
-      $or: [{ email }, { phoneNumber }]
+      $or: [{ email }, { Phonenumber }]
     });
 
     if (!user) {
@@ -268,10 +271,10 @@ const loginUser = async (req, res) => {
         token,
         user: {
           id: user._id,
-          fullName: user.fullName,
-          username: user.username,
+          Firstname: user.Firstname,
+          Username: user.Username,
           email: user.email,
-          phoneNumber: user.phoneNumber,
+          Phonenumber: user.Phonenumber,
           country: user.country
         }
       }
@@ -288,9 +291,9 @@ const loginUser = async (req, res) => {
 // Forgot password
 const forgotPassword = async (req, res) => {
   try {
-    const { email, phoneNumber } = req.body;
+    const { email, Phonenumber } = req.body;
 
-    if (!email && !phoneNumber) {
+    if (!email && !Phonenumber) {
       return res.status(400).json({
         success: false,
         message: 'Please provide email or phone number'
@@ -299,8 +302,10 @@ const forgotPassword = async (req, res) => {
 
     // Find user by email or phone number
     const user = await User.findOne({
-      $or: [{ email }, { phoneNumber }]
+      $or: [{ email }, { Phonenumber }]
     });
+    
+    
 
     if (!user) {
       return res.status(404).json({
