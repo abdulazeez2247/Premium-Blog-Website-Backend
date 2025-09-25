@@ -28,7 +28,7 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-// Get user by ID (admin only)
+// Get user by ID 
 const getUserById = async (req, res) => {
   try {
     if (req.user.role !== 'admin') {
@@ -70,7 +70,7 @@ const updateUserRole = async (req, res) => {
       });
     }
 
-    const { role } = req.body;
+    const  role  = req.body;
     const validRoles = ['user', 'admin', 'moderator'];
     
     if (!validRoles.includes(role)) {
@@ -82,7 +82,7 @@ const updateUserRole = async (req, res) => {
 
     const user = await User.findByIdAndUpdate(
       req.params.id,
-      { role },
+       role ,
       { new: true, runValidators: true }
     ).select('-password');
 
@@ -170,10 +170,6 @@ const getDashboardStats = async (req, res) => {
           verified: verifiedUsers,
           admins: adminUsers
         },
-        // posts: {
-        //   total: totalPosts,
-        //   published: publishedPosts
-        // }
       }
     });
   } catch (error) {

@@ -1,7 +1,7 @@
 const nodemailer = require('nodemailer');
 const dotenv = require('dotenv').config();
 
-// Create  transporter
+// Create transporter
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -19,13 +19,30 @@ transporter.verify((error, success) => {
   }
 });
 
-// Send welcome email
-const sendWelcomeEmail = async (email, name) => {
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: email,
-    subject: 'Welcome to Premium Blog Website!',
-    html: `
+// Send welcome email (user or admin)
+const sendWelcomeEmail = async (email, name, role = 'user') => {
+  let subject, html;
+
+  if (role === 'admin') {
+    subject = 'Welcome Admin – Premium Blog Website';
+    html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #333;">Welcome to Premium Blog Admin Panel, ${name}!</h2>
+        <p>You’ve been registered as an <strong>Admin</strong> on Premium Blog Website.</p>
+        <p>As an admin, you can:</p>
+        <ul>
+          <li>Manage users and their subscriptions</li>
+          <li>Publish, edit, and remove articles</li>
+          <li>Oversee premium content access</li>
+          <li>Track platform activities and performance</li>
+        </ul>
+        <p>If you encounter issues, contact our dev/support team immediately.</p>
+        <p><strong>The Premium Blog Management</strong></p>
+      </div>
+    `;
+  } else {
+    subject = 'Welcome to Premium Blog Website!';
+    html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #333;">Welcome to Premium Blog Website, ${name}!</h2>
         <p>We're excited to have you on board. Here's what you can do with your account:</p>
@@ -38,12 +55,19 @@ const sendWelcomeEmail = async (email, name) => {
         <p>Happy reading!</p>
         <p><strong>The Premium Blog Team</strong></p>
       </div>
-    `,
+    `;
+  }
+
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject,
+    html,
   };
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log('Welcome email sent to:', email);
+    console.log(`${role} welcome email sent to:`, email);
     return true;
   } catch (error) {
     console.error('Error sending welcome email:', error);
@@ -100,8 +124,6 @@ const sendPasswordResetEmail = async (email, resetToken) => {
   try {
     await transporter.sendMail(mailOptions);
     console.log('Password reset email sent to:', email);
-    console.log(mailOptions);
-    
     return true;
   } catch (error) {
     console.error('Error sending password reset email:', error);

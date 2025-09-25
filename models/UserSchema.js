@@ -45,7 +45,7 @@ const user = mongoose.Schema(
         },
         role: {
             type: String,
-            enum: ['user', 'admin','moderator'],
+            enum: ['user', 'admin'],
             default: 'user'
         },
         isVerified:{
@@ -60,4 +60,3 @@ const user = mongoose.Schema(
 
 const usermodel = mongoose.model('users', user);
 module.exports = usermodel
-// i must add country to this and phone number

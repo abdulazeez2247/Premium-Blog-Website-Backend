@@ -14,8 +14,7 @@ const registerUser = async (req, res) => {
   try {
     const { Firstname, Lastname, Username, email, Phonenumber, country, password } = req.body;
 
-    // Check if all required fields are provided
-    if (!Firstname || !Username || !Lastname || !country || !password || (!email && !Phonenumber)) {
+    if (!Firstname || !Lastname || !Username || !country || !password || (!email && !Phonenumber)) {
       return res.status(400).json({
         success: false,
         message: 'Please provide all required fields'
@@ -30,7 +29,7 @@ const registerUser = async (req, res) => {
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: 'User with this email, username, or phone number already exists please try changing your username, phone number or email thank you'
+        message: 'User with this email, username, or phone number already exists. Please try changing your username, phone number or email.'
       });
     }
 
@@ -61,23 +60,16 @@ const registerUser = async (req, res) => {
 
     await userVerification.save();
 
-    // Send OTP email if email was provided
+    // Send OTP email if email provided
     if (email) {
       await sendOtpEmail(email, otp);
-      console.log(otp);
-      
-    }
-
-    // Send welcome email if email was provided
-    if (email) {
-      await sendWelcomeEmail(email, Firstname);
+      console.log("OTP:", otp);
     }
 
     res.status(201).json({
       success: true,
       message: 'User registered successfully. Please verify your account.',
       data: {
-        // Don't include user ID in response
         email: user.email,
         Phonenumber: user.Phonenumber,
         verificationHint: 'Use your email or phone number to verify your account'
@@ -97,7 +89,6 @@ const verifyOtp = async (req, res) => {
   try {
     const { email, Phonenumber, otp } = req.body;
 
-    // Check if either email or phone number is provided
     if ((!email && !Phonenumber) || !otp) {
       return res.status(400).json({
         success: false,
@@ -105,43 +96,34 @@ const verifyOtp = async (req, res) => {
       });
     }
 
-    // Find user by email or phone number
-    const user = await User.findOne({
-      $or: [{ email }, { Phonenumber }]
-    });
-
+    // Find user
+    const user = await User.findOne({ $or: [{ email }, { Phonenumber }] });
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
+      return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    // Find verification record
+    // Find OTP record
     const verification = await UserVerification.findOne({ userId: user._id });
-
     if (!verification) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid or expired OTP'
-      });
+      return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
     }
 
-    // Check if OTP matches
+    // Compare OTP
     const isOtpValid = await bcrypt.compare(otp, verification.otp);
-
     if (!isOtpValid) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid OTP'
-      });
+      return res.status(400).json({ success: false, message: 'Invalid OTP' });
     }
 
-    // Update user verification status
+    // Update user verified status
     await User.findByIdAndUpdate(user._id, { isVerified: true });
 
     // Delete verification record
     await UserVerification.deleteOne({ userId: user._id });
+
+    // Send Welcome Email after verification
+    if (user.email) {
+      await sendWelcomeEmail(user.email, user.Firstname);
+    }
 
     res.status(200).json({
       success: true,
@@ -149,10 +131,7 @@ const verifyOtp = async (req, res) => {
     });
   } catch (error) {
     console.error('OTP verification error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
 
@@ -160,58 +139,30 @@ const verifyOtp = async (req, res) => {
 const resendOtp = async (req, res) => {
   try {
     const { email, Phonenumber } = req.body;
-
-    // Check if either email or phone number is provided
     if (!email && !Phonenumber) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email or phone number is required'
-      });
+      return res.status(400).json({ success: false, message: 'Email or phone number is required' });
     }
 
-    // Find user by email or phone number
-    const user = await User.findOne({
-      $or: [{ email }, { Phonenumber }]
-    });
-
+    const user = await User.findOne({ $or: [{ email }, { Phonenumber }] });
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
+      return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    // Delete any existing OTP for this user
+    // Delete old OTP
     await UserVerification.deleteMany({ userId: user._id });
 
-    // Generate and save new OTP
+    // Generate new OTP
     const otp = generateOtp();
     const hashedOtp = await bcrypt.hash(otp, 10);
 
-    const userVerification = new UserVerification({
-      userId: user._id,
-      otp: hashedOtp
-    });
+    await new UserVerification({ userId: user._id, otp: hashedOtp }).save();
 
-    await userVerification.save();
+    if (email) await sendOtpEmail(email, otp);
 
-    // Send OTP email if email was provided
-    if (email) {
-      await sendOtpEmail(email, otp);
-    }
-
-    
-
-    res.status(200).json({
-      success: true,
-      message: 'New OTP sent successfully'
-    });
+    res.status(200).json({ success: true, message: 'New OTP sent successfully' });
   } catch (error) {
     console.error('Resend OTP error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
 
@@ -221,48 +172,24 @@ const loginUser = async (req, res) => {
     const { email, Phonenumber, password } = req.body;
 
     if ((!email && !Phonenumber) || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please provide email/phone and password'
-      });
+      return res.status(400).json({ success: false, message: 'Please provide email/phone and password' });
     }
 
-    // Find user by email or phone number
-    const user = await User.findOne({
-      $or: [{ email }, { Phonenumber }]
-    });
-
+    const user = await User.findOne({ $or: [{ email }, { Phonenumber }] });
     if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid credentials'
-      });
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
-    // Check password
     const isPasswordValid = await bcrypt.compare(password, user.password);
-
     if (!isPasswordValid) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid credentials'
-      });
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
-    // Check if user is verified
     if (!user.isVerified) {
-      return res.status(401).json({
-        success: false,
-        message: 'Please verify your account before logging in'
-      });
+      return res.status(401).json({ success: false, message: 'Please verify your account before logging in' });
     }
 
-    // Generate JWT token
-    const token = jwt.sign(
-      { userId: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: '24h' }
-    );
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '24h' });
 
     res.status(200).json({
       success: true,
@@ -281,10 +208,7 @@ const loginUser = async (req, res) => {
     });
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
 
@@ -292,36 +216,17 @@ const loginUser = async (req, res) => {
 const forgotPassword = async (req, res) => {
   try {
     const { email, Phonenumber } = req.body;
-
     if (!email && !Phonenumber) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please provide email or phone number'
-      });
+      return res.status(400).json({ success: false, message: 'Please provide email or phone number' });
     }
 
-    // Find user by email or phone number
-    const user = await User.findOne({
-      $or: [{ email }, { Phonenumber }]
-    });
-    
-    
-
+    const user = await User.findOne({ $or: [{ email }, { Phonenumber }] });
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
+      return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    // Generate password reset token
-    const resetToken = jwt.sign(
-      { userId: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: '1h' }
-    );
+    const resetToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-    // Send password reset email if email exists
     if (user.email) {
       await sendPasswordResetEmail(user.email, resetToken);
     }
@@ -329,16 +234,11 @@ const forgotPassword = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Password reset instructions sent to your email',
-      data: {
-        resetToken: user.email ? resetToken : null
-      }
+      data: { resetToken: user.email ? resetToken : null }
     });
   } catch (error) {
     console.error('Forgot password error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
 
@@ -346,49 +246,28 @@ const forgotPassword = async (req, res) => {
 const resetPassword = async (req, res) => {
   try {
     const { token, newPassword } = req.body;
-
     if (!token || !newPassword) {
-      return res.status(400).json({
-        success: false,
-        message: 'Token and new password are required'
-      });
+      return res.status(400).json({ success: false, message: 'Token and new password are required' });
     }
 
-    // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const userId = decoded.userId;
 
-    // Hash new password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    // Update user password
     await User.findByIdAndUpdate(userId, { password: hashedPassword });
 
-    res.status(200).json({
-      success: true,
-      message: 'Password reset successfully'
-    });
+    res.status(200).json({ success: true, message: 'Password reset successfully' });
   } catch (error) {
     console.error('Reset password error:', error);
-    
+
     if (error.name === 'JsonWebTokenError') {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid token'
-      });
+      return res.status(400).json({ success: false, message: 'Invalid token' });
     }
-    
     if (error.name === 'TokenExpiredError') {
-      return res.status(400).json({
-        success: false,
-        message: 'Token has expired'
-      });
+      return res.status(400).json({ success: false, message: 'Token has expired' });
     }
-    
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
+
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
 
