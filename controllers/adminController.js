@@ -71,7 +71,7 @@ const updateUserRole = async (req, res) => {
     }
 
     const  role  = req.body;
-    const validRoles = ['user', 'admin', 'moderator'];
+    const validRoles = ['user', 'admin'];
     
     if (!validRoles.includes(role)) {
       return res.status(400).json({

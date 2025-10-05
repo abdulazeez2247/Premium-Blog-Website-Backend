@@ -3,7 +3,6 @@ const mongoose = require('mongoose')
 
 const user = mongoose.Schema(
     {
-
         Firstname:{
             type:String,
             required:[true , 'Please enter your firstname'],
@@ -16,8 +15,9 @@ const user = mongoose.Schema(
         },
         Username:{
             type:String,
-            required:[true , 'Please enter your lastname'],
+            required:[true , 'Please enter your username'],
             trim:true,
+            unique: true
         },
         email:{
             type:String,
@@ -51,6 +51,34 @@ const user = mongoose.Schema(
         isVerified:{
             type:Boolean,
             default:false
+        },
+        profilePicture: {
+            type: String,
+            default: ''
+        },
+        bio: {
+            type: String,
+            default: '',
+            maxLength: [500, 'Bio should not exceed 500 characters']
+        },
+        isActive: {
+            type: Boolean,
+            default: true
+        },
+        subscription: {
+            plan: {
+                type: String,
+                enum: ['free', 'premium'],
+                default: 'free'
+            },
+            status: {
+                type: String,
+                enum: ['active', 'inactive', 'cancelled'],
+                default: 'inactive'
+            },
+            expiresAt: {
+                type: Date
+            }
         }
     },
     {
