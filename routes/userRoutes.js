@@ -19,7 +19,7 @@ const router = express.Router();
 const upload = multer({
   dest: 'uploads/',
   limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB max
+    fileSize: 10 * 1024 * 1024 
   }
 });
 
@@ -32,8 +32,6 @@ router.delete('/remove-picture', protect, deleteProfilePicture);
 router.put('/deactivate', protect, deactivateAccount);
 router.get('/subscription', protect, getSubscription);
 router.get('/billing', protect, getBillingHistory);
-
-// Public route
 router.get('/public/:id', getPublicProfile);
 
 module.exports = router;
