@@ -12,9 +12,9 @@ const generateOtp = () => {
 // Register user
 const registerUser = async (req, res) => {
   try {
-    const { Firstname, Lastname, Username, email, Phonenumber, country, password } = req.body;
+    const { Firstname, Lastname, Username, email, Phonenumber, Country, Password } = req.body;
 
-    if (!Firstname || !Lastname || !Username || !country || !password || (!email && !Phonenumber)) {
+    if (!Firstname || !Lastname || !Username || !Country || !Password || (!email && !Phonenumber)) {
       return res.status(400).json({
         success: false,
         message: 'Please provide all required fields'
@@ -34,7 +34,7 @@ const registerUser = async (req, res) => {
     }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(Password, 10);
 
     // Create user
     const user = new User({
@@ -43,8 +43,8 @@ const registerUser = async (req, res) => {
       Username,
       email,
       Phonenumber,
-      country,
-      password: hashedPassword
+      Country,
+      Password: hashedPassword
     });
 
     await user.save();
@@ -169,9 +169,9 @@ const resendOtp = async (req, res) => {
 // Login user
 const loginUser = async (req, res) => {
   try {
-    const { email, Phonenumber, password } = req.body;
+    const { email, Phonenumber, Password } = req.body;
 
-    if ((!email && !Phonenumber) || !password) {
+    if ((!email && !Phonenumber) || !Password) {
       return res.status(400).json({ success: false, message: 'Please provide email/phone and password' });
     }
 
@@ -180,9 +180,11 @@ const loginUser = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await bcrypt.compare(Password, user.Password);
     if (!isPasswordValid) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
+      
+      
     }
 
     if (!user.isVerified) {
@@ -202,7 +204,7 @@ const loginUser = async (req, res) => {
           Username: user.Username,
           email: user.email,
           Phonenumber: user.Phonenumber,
-          country: user.country
+          Country: user.Country
         }
       }
     });

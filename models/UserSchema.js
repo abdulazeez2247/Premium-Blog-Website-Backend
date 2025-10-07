@@ -26,7 +26,7 @@ const user = mongoose.Schema(
             unique:true,
             match:[/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/ ,'enter a valid email' ]
         },
-        password:{
+        Password:{
             type:String,
             required:[true , 'Please enter your password'],
             minLength:[7 , 'password must contain at least 7 character '],
@@ -38,7 +38,7 @@ const user = mongoose.Schema(
             required: [true, 'Please enter your phone number'],
             trim: true,
         },
-        country: {
+        Country: {
             type: String,
             required: [true, 'Enter your country'],
             trim: true,
