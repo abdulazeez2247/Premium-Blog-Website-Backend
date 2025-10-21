@@ -12,9 +12,9 @@ const generateOtp = () => {
 // Register Admin
 const registerAdmin = async (req, res) => {
   try {
-    const { Firstname, Lastname, Username, email, Phonenumber, country, password } = req.body;
+    const { Firstname, Lastname, Username, email, Phonenumber, Country, Password } = req.body;
 
-    if (!Firstname || !Lastname || !Username || !country || !password || (!email && !Phonenumber)) {
+    if (!Firstname || !Lastname || !Username || !Country || !Password || (!email && !Phonenumber)) {
       return res.status(400).json({ success: false, message: "Please provide all required fields" });
     }
 
@@ -23,7 +23,7 @@ const registerAdmin = async (req, res) => {
       return res.status(400).json({ success: false, message: "Admin with this email, username, or phone number already exists" });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(Password, 10);
 
     const admin = new User({
       Firstname,
@@ -31,8 +31,8 @@ const registerAdmin = async (req, res) => {
       Username,
       email,
       Phonenumber,
-      country,
-      password: hashedPassword,
+      Country,
+      Password: hashedPassword,
       role: "admin"
     });
 
@@ -51,6 +51,7 @@ const registerAdmin = async (req, res) => {
     if (email) {
       await sendOtpEmail(email, otp);
       await sendWelcomeEmail(email, Firstname, 'admin');
+      console.log("OTP:", otp);
     }
 
     res.status(201).json({
@@ -135,9 +136,9 @@ const resendAdminOtp = async (req, res) => {
 // Login Admin
 const loginAdmin = async (req, res) => {
   try {
-    const { email, Phonenumber, password } = req.body;
+    const { email, Phonenumber, Password } = req.body;
 
-    if ((!email && !Phonenumber) || !password) {
+    if ((!email && !Phonenumber) || !Password) {
       return res.status(400).json({ success: false, message: "Please provide email/phone and password" });
     }
 
@@ -146,7 +147,7 @@ const loginAdmin = async (req, res) => {
       return res.status(401).json({ success: false, message: "Not an admin account" });
     }
 
-    const isPasswordValid = await bcrypt.compare(password, admin.password);
+    const isPasswordValid = await bcrypt.compare(Password, admin.Password);
     if (!isPasswordValid) {
       return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
@@ -160,7 +161,7 @@ const loginAdmin = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Admin login successful",
-      data: { token, admin: { id: admin._id, Firstname: admin.Firstname, Username: admin.Username, email: admin.email, Phonenumber: admin.Phonenumber, country: admin.country } }
+      data: { token, admin: { id: admin._id, Firstname: admin.Firstname, Username: admin.Username, email: admin.email, Phonenumber: admin.Phonenumber, Country: admin.Country } }
     });
   } catch (error) {
     console.error("Admin Login error:", error);
